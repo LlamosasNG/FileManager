@@ -10,6 +10,7 @@ import android.os.Environment
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.animation.AnimationUtils
 import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
@@ -17,6 +18,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.attribute.BasicFileAttributes
@@ -47,6 +49,24 @@ class MainActivity : AppCompatActivity(), FileAdapter.OnItemClickListener,
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Ocultar la ActionBar predeterminada si estás usando un tema que la tiene
+        supportActionBar?.hide()
+
+        // Configurar la barra de estado personalizada
+        val statusBar = findViewById<EscoManagerStatusBar>(R.id.status_bar)
+
+        // Configurar listener para opciones del menú
+        statusBar.onMenuItemSelectedListener = { itemId ->
+            when (itemId) {
+                /* R.id.action_settings -> {
+                    // Manejar clic en configuración
+                    true
+                } */
+                // Otros items del menú...
+                else -> false
+            }
+        }
+
         // Get current path
         currentPath = intent.getStringExtra("path")
 
@@ -56,6 +76,7 @@ class MainActivity : AppCompatActivity(), FileAdapter.OnItemClickListener,
         } else {
             initRecyclerView()
         }
+
     }
 
     override fun onRequestPermissionsResult(
@@ -172,11 +193,6 @@ class MainActivity : AppCompatActivity(), FileAdapter.OnItemClickListener,
         return attr.creationTime().toMillis()
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.menu_main, menu)
-        return true
-    }
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.menu_sort_by_name -> {
@@ -214,11 +230,19 @@ class MainActivity : AppCompatActivity(), FileAdapter.OnItemClickListener,
     }
 
     override fun onDestroy() {
-        // Update file hashes
-        val db = FileHashDatabaseHelper(this)
-        for (file in getFiles()) {
-            db.insertFileHash(file)
-        }
+        Thread {
+            try {
+                val db = FileHashDatabaseHelper(this)
+                for (file in getFiles()) {
+                    if (file.isFile && file.canRead()) {
+                        db.insertFileHash(file)
+                    }
+                }
+            } catch (e: Exception) {
+                // Manejar excepciones
+            }
+        }.start()
         super.onDestroy()
     }
+
 }

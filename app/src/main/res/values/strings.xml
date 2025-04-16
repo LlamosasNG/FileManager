@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">File Manager</string>
+    <string name="app_name">EscoManager</string>
     <string name="sort_by">Sort by</string>
     <string name="name">Name</string>
     <string name="size">Size</string>
